@@ -33,8 +33,7 @@ export function DeleteButton({ id }: DeleteButtonProps) {
       disabled={isLoading}
       className="flex-1 text-center bg-[#1a1f38] text-[#ff6b8a] px-3 py-2 rounded-lg hover:bg-[#1f2a50] transition text-sm font-mono flex items-center justify-center gap-1 disabled:opacity-50"
     >
-      <i className="fas fa-trash-alt"></i>
-      {isLoading ? '...' : 'Supprimer'}
+      🗑️ {isLoading ? '...' : 'Supprimer'}
     </button>
   )
 }
