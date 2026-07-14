@@ -4,6 +4,7 @@ import { login } from "@/actions/auth"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import Footer from "@/components/Footer"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,7 +35,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace] flex flex-col items-center justify-center p-4">
       <style>{`
         .btn-neon {
           background: transparent;
@@ -109,7 +110,7 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="w-full max-w-[480px] space-y-8" style={{ animation: 'fadeIn 0.4s ease' }}>
+      <div className="w-full max-w-[480px] space-y-8 flex-1 flex flex-col justify-center" style={{ animation: 'fadeIn 0.4s ease' }}>
         <h2 className="text-3xl font-normal text-[#eef4ff] shadow-[0_0_20px_#00f0ff33]">
           <i className="fas fa-lock text-[#00f0ff] mr-3"></i> Connexion
         </h2>
@@ -141,6 +142,7 @@ export default function LoginPage() {
         </form>
       </div>
 
+      <Footer />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     </div>
   )

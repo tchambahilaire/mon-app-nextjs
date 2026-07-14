@@ -1,16 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { getResources } from "@/actions/resources"
 import { logout } from "@/actions/auth"
 import { DeleteButton } from "@/components/DeleteButton"
-
-// Cache des ressources
-let cachedResources: any[] | null = null
-let cacheTimestamp = 0
-const CACHE_DURATION = 30000 // 30 secondes
+import Footer from "@/components/Footer"
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -18,51 +14,38 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  const loadData = useCallback(async () => {
-    try {
-      // Vérifier le cache
-      const now = Date.now()
-      if (cachedResources && (now - cacheTimestamp) < CACHE_DURATION) {
-        setResources(cachedResources)
-        setLoading(false)
-        return
-      }
-
-      // Récupérer la session
-      const sessionRes = await fetch('/api/auth/session', {
-        credentials: 'include',
-        cache: 'no-cache'
-      })
-      
-      if (!sessionRes.ok) {
-        router.push('/login')
-        return
-      }
-      
-      const sessionData = await sessionRes.json()
-      if (!sessionData.user) {
-        router.push('/login')
-        return
-      }
-      
-      setUser(sessionData.user)
-      
-      // Récupérer les ressources
-      const resourcesData = await getResources()
-      cachedResources = resourcesData
-      cacheTimestamp = now
-      setResources(resourcesData)
-    } catch (error) {
-      console.error('Error loading data:', error)
-      router.push('/login')
-    } finally {
-      setLoading(false)
-    }
-  }, [router])
-
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        const sessionRes = await fetch('/api/auth/session', {
+          credentials: 'include',
+        })
+        
+        if (!sessionRes.ok) {
+          router.push('/login')
+          return
+        }
+        
+        const sessionData = await sessionRes.json()
+        if (!sessionData.user) {
+          router.push('/login')
+          return
+        }
+        
+        setUser(sessionData.user)
+        
+        const resourcesData = await getResources()
+        setResources(resourcesData)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        router.push('/login')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
     loadData()
-  }, [loadData])
+  }, [router])
 
   if (loading) {
     return (
@@ -83,7 +66,7 @@ export default function DashboardPage() {
   const rate = totalCount ? Math.round((publishedCount / totalCount) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace]">
+    <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace] flex flex-col">
       <style>{`
         .navbar {
           background: #0f1222;
@@ -213,6 +196,7 @@ export default function DashboardPage() {
           margin: 0 auto;
           width: 100%;
           animation: fadeIn 0.4s ease;
+          flex: 1;
         }
 
         @keyframes fadeIn {
@@ -246,6 +230,9 @@ export default function DashboardPage() {
           </Link>
           <Link href="/ressources">
             <i className="fas fa-box"></i> Ressources
+          </Link>
+          <Link href="/developpe-par">
+            <i className="fas fa-code"></i> 👨‍💻
           </Link>
           <form action={logout}>
             <button type="submit">
@@ -353,6 +340,7 @@ export default function DashboardPage() {
         )}
       </div>
 
+      <Footer />
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     </div>
   )
