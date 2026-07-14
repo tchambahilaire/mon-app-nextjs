@@ -1,11 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { getResources } from "@/actions/resources"
 import { logout } from "@/actions/auth"
 import { DeleteButton } from "@/components/DeleteButton"
+
+// Cache des ressources
+let cachedResources: any[] | null = null
+let cacheTimestamp = 0
+const CACHE_DURATION = 30000 // 30 secondes
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -13,40 +18,51 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Récupérer la session via l'API
-        const sessionRes = await fetch('/api/auth/session', {
-          credentials: 'include',
-        })
-        
-        if (!sessionRes.ok) {
-          router.push('/login')
-          return
-        }
-        
-        const sessionData = await sessionRes.json()
-        if (!sessionData.user) {
-          router.push('/login')
-          return
-        }
-        
-        setUser(sessionData.user)
-        
-        // Récupérer les ressources
-        const resourcesData = await getResources()
-        setResources(resourcesData)
-      } catch (error) {
-        console.error('Error loading data:', error)
-        router.push('/login')
-      } finally {
+  const loadData = useCallback(async () => {
+    try {
+      // Vérifier le cache
+      const now = Date.now()
+      if (cachedResources && (now - cacheTimestamp) < CACHE_DURATION) {
+        setResources(cachedResources)
         setLoading(false)
+        return
       }
+
+      // Récupérer la session
+      const sessionRes = await fetch('/api/auth/session', {
+        credentials: 'include',
+        cache: 'no-cache'
+      })
+      
+      if (!sessionRes.ok) {
+        router.push('/login')
+        return
+      }
+      
+      const sessionData = await sessionRes.json()
+      if (!sessionData.user) {
+        router.push('/login')
+        return
+      }
+      
+      setUser(sessionData.user)
+      
+      // Récupérer les ressources
+      const resourcesData = await getResources()
+      cachedResources = resourcesData
+      cacheTimestamp = now
+      setResources(resourcesData)
+    } catch (error) {
+      console.error('Error loading data:', error)
+      router.push('/login')
+    } finally {
+      setLoading(false)
     }
-    
-    loadData()
   }, [router])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   if (loading) {
     return (
@@ -69,23 +85,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace]">
       <style>{`
-        /* ========== RESET & BASE ========== */
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: 'Courier New', monospace;
-        }
-
-        body {
-          background: #0b0d1a;
-          color: #d0d6f0;
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* ========== NAVIGATION ========== */
         .navbar {
           background: #0f1222;
           padding: 16px 40px;
@@ -116,7 +115,7 @@ export default function DashboardPage() {
           gap: 8px;
           flex-wrap: wrap;
         }
-        .nav-links a, .nav-links button {
+        .nav-links a {
           background: transparent;
           border: none;
           color: #6a7aaa;
@@ -129,34 +128,18 @@ export default function DashboardPage() {
           border: 1px solid transparent;
           text-decoration: none;
         }
-        .nav-links a:hover, .nav-links button:hover {
+        .nav-links a:hover {
           color: #00f0ff;
           background: #1a1f38;
           border-color: #00f0ff44;
         }
-        .nav-links a.active, .nav-links button.active {
+        .nav-links a.active {
           color: #00f0ff;
           background: #1a1f38;
           border-color: #00f0ff;
           box-shadow: 0 0 20px #00f0ff15;
         }
 
-        /* ========== PAGE ========== */
-        .page {
-          flex: 1;
-          padding: 40px 30px;
-          max-width: 800px;
-          margin: 0 auto;
-          width: 100%;
-          animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ========== BOUTONS NÉON ========== */
         .btn-neon {
           background: transparent;
           border: 1.5px solid #00f0ff;
@@ -184,29 +167,6 @@ export default function DashboardPage() {
           transform: scale(1.03);
         }
 
-        .btn-neon-secondary {
-          border-color: #b47aff;
-          color: #b47aff;
-          box-shadow: 0 0 20px #b47aff22, inset 0 0 20px #b47aff08;
-        }
-        .btn-neon-secondary:hover {
-          background: #b47aff;
-          color: #0b0d1a;
-          box-shadow: 0 0 50px #b47aff66, inset 0 0 30px #b47aff44;
-        }
-
-        .btn-neon-danger {
-          border-color: #ff6b8a;
-          color: #ff6b8a;
-          box-shadow: 0 0 20px #ff6b8a22, inset 0 0 20px #ff6b8a08;
-        }
-        .btn-neon-danger:hover {
-          background: #ff6b8a;
-          color: #0b0d1a;
-          box-shadow: 0 0 50px #ff6b8a66;
-        }
-
-        /* ========== STATS ========== */
         .stat-card {
           background: #10152b;
           border: 1px solid #1f2a50;
@@ -226,7 +186,6 @@ export default function DashboardPage() {
           text-shadow: 0 0 30px #00f0ff33;
         }
 
-        /* ========== RESOURCE CARDS ========== */
         .resource-card {
           background: #10152b;
           border: 1px solid #1f2a50;
@@ -240,7 +199,6 @@ export default function DashboardPage() {
           transform: translateY(-4px);
         }
 
-        /* ========== EMPTY STATE ========== */
         .empty-state {
           background: #10152b;
           border: 2px dashed #1f2a50;
@@ -249,7 +207,19 @@ export default function DashboardPage() {
           text-align: center;
         }
 
-        /* ========== RESPONSIVE ========== */
+        .page {
+          padding: 40px 30px;
+          max-width: 800px;
+          margin: 0 auto;
+          width: 100%;
+          animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 700px) {
           .navbar {
             padding: 14px 20px;
@@ -262,18 +232,12 @@ export default function DashboardPage() {
           .page {
             padding: 30px 18px;
           }
-          .btn-neon {
-            width: 100%;
-            text-align: center;
-            justify-content: center;
-          }
           .stat-value {
             font-size: 24px;
           }
         }
       `}</style>
 
-      {/* ===== NAVIGATION ===== */}
       <nav className="navbar">
         <div className="logo"><i className="fas fa-terminal"></i>MonApp</div>
         <div className="nav-links">
@@ -291,9 +255,7 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      {/* ===== PAGE ===== */}
       <div className="page">
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-normal text-[#eef4ff] flex items-center gap-3">
@@ -309,7 +271,6 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* STATS DYNAMIQUES */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="stat-card">
             <div className="flex justify-between items-center mb-2">
@@ -345,7 +306,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* RESSOURCES DYNAMIQUES */}
         {resources.length === 0 ? (
           <div className="empty-state">
             <div className="text-6xl mb-4">⚡</div>
@@ -393,7 +353,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ===== FONT AWESOME CDN ===== */}
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     </div>
   )

@@ -6,6 +6,7 @@ import { resourceSchema } from "@/lib/validations"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
+// CREATE
 export async function createResource(formData: FormData) {
   const user = await getSession()
   
@@ -36,6 +37,7 @@ export async function createResource(formData: FormData) {
   redirect('/dashboard')
 }
 
+// READ (list) - Optimisé
 export async function getResources() {
   const user = await getSession()
   
@@ -45,10 +47,20 @@ export async function getResources() {
 
   return await prisma.resource.findMany({
     where: { userId: user.id },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    // Récupérer uniquement les champs nécessaires
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      published: true,
+      createdAt: true,
+      updatedAt: true
+    }
   })
 }
 
+// READ (detail)
 export async function getResource(id: string) {
   const user = await getSession()
   
@@ -57,7 +69,16 @@ export async function getResource(id: string) {
   }
 
   const resource = await prisma.resource.findUnique({
-    where: { id }
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      published: true,
+      createdAt: true,
+      updatedAt: true,
+      userId: true
+    }
   })
 
   if (!resource) {
@@ -71,6 +92,7 @@ export async function getResource(id: string) {
   return resource
 }
 
+// UPDATE
 export async function updateResource(id: string, formData: FormData) {
   const user = await getSession()
   
@@ -79,7 +101,8 @@ export async function updateResource(id: string, formData: FormData) {
   }
 
   const existingResource = await prisma.resource.findUnique({
-    where: { id }
+    where: { id },
+    select: { userId: true }
   })
 
   if (!existingResource || existingResource.userId !== user.id) {
@@ -106,6 +129,7 @@ export async function updateResource(id: string, formData: FormData) {
   redirect('/dashboard')
 }
 
+// DELETE
 export async function deleteResource(id: string) {
   const user = await getSession()
   
@@ -114,7 +138,8 @@ export async function deleteResource(id: string) {
   }
 
   const existingResource = await prisma.resource.findUnique({
-    where: { id }
+    where: { id },
+    select: { userId: true }
   })
 
   if (!existingResource || existingResource.userId !== user.id) {
