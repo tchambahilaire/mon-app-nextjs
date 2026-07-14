@@ -1,0 +1,276 @@
+import { getSession } from "@/lib/auth/auth-server"
+import { getResources } from "@/actions/resources"
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import { logout } from "@/actions/auth"
+import { DeleteButton } from "@/components/DeleteButton"
+import { 
+  PlusCircle, 
+  LogOut, 
+  FileText, 
+  Calendar, 
+  User,
+  LayoutDashboard,
+  TrendingUp,
+  Clock,
+  Sparkles,
+  Eye,
+  Edit,
+  Bell,
+  Settings,
+  HelpCircle,
+  ArrowUpRight,
+  Rocket,
+  Zap,
+  Flame,
+  Star,
+  Palette,
+  Gem
+} from "lucide-react"
+
+export default async function DashboardPage() {
+  const user = await getSession()
+  
+  if (!user) {
+    redirect('/login')
+  }
+
+  const resources = await getResources()
+  const publishedCount = resources.filter(r => r.published).length
+  const draftCount = resources.filter(r => !r.published).length
+  const totalCount = resources.length
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  }
+
+  // Statistiques colorées
+  const stats = [
+    { 
+      label: 'Total', 
+      value: totalCount, 
+      icon: FileText, 
+      color: 'from-blue-500 to-blue-600',
+      bg: 'bg-blue-500',
+      hover: 'hover:bg-blue-600',
+      shadow: 'shadow-blue-500/30',
+      numberColor: 'text-blue-600'
+    },
+    { 
+      label: 'Publiées', 
+      value: publishedCount, 
+      icon: TrendingUp, 
+      color: 'from-emerald-500 to-emerald-600',
+      bg: 'bg-emerald-500',
+      hover: 'hover:bg-emerald-600',
+      shadow: 'shadow-emerald-500/30',
+      numberColor: 'text-emerald-600'
+    },
+    { 
+      label: 'Brouillons', 
+      value: draftCount, 
+      icon: Clock, 
+      color: 'from-amber-500 to-amber-600',
+      bg: 'bg-amber-500',
+      hover: 'hover:bg-amber-600',
+      shadow: 'shadow-amber-500/30',
+      numberColor: 'text-amber-600'
+    },
+    { 
+      label: 'Taux', 
+      value: resources.length ? Math.round((publishedCount / resources.length) * 100) : 0, 
+      icon: Sparkles, 
+      color: 'from-purple-500 to-purple-600',
+      bg: 'bg-purple-500',
+      hover: 'hover:bg-purple-600',
+      shadow: 'shadow-purple-500/30',
+      suffix: '%',
+      numberColor: 'text-purple-600'
+    }
+  ]
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Header coloré */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl">
+                <LayoutDashboard className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">
+                  Tableau de bord
+                </h1>
+                <p className="text-white/80 flex items-center gap-2 text-sm">
+                  <User className="w-4 h-4" />
+                  Bienvenue, <span className="font-semibold text-white">{user.name || user.email}</span>
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 w-full lg:w-auto">
+              <button className="relative p-2.5 bg-white/20 backdrop-blur-sm rounded-2xl hover:bg-white/30 transition">
+                <Bell className="w-5 h-5 text-white" />
+                <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white"></span>
+              </button>
+              
+              <Link 
+                href="/ressources/nouveau"
+                className="flex-1 lg:flex-none bg-white text-blue-600 px-6 py-2.5 rounded-2xl font-bold inline-flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <PlusCircle className="w-5 h-5" />
+                Nouvelle ressource
+              </Link>
+              
+              <form action={logout} className="flex-1 lg:flex-none">
+                <button className="w-full lg:w-auto bg-red-500 text-white px-6 py-2.5 rounded-2xl font-bold inline-flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all hover:bg-red-600">
+                  <LogOut className="w-5 h-5" />
+                  Déconnexion
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Statistiques colorées */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-l-4 border-blue-500"
+              style={{ borderColor: `var(--${stat.numberColor})` }}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-slate-500 text-sm font-medium">{stat.label}</p>
+                  <p className={`text-3xl font-bold mt-2 ${stat.numberColor}`}>
+                    {stat.value}{stat.suffix || ''}
+                  </p>
+                  <p className="text-xs text-emerald-600 mt-2 flex items-center gap-1 font-medium">
+                    <ArrowUpRight className="w-3 h-3" />
+                    +0%
+                  </p>
+                </div>
+                <div className={`${stat.bg} p-3 rounded-2xl shadow-lg ${stat.shadow} group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className="w-5 h-5 text-white" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Barre d'outils colorée */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-slate-700">
+              📊 {totalCount} ressource{totalCount > 1 ? 's' : ''}
+            </span>
+            <span className="w-px h-6 bg-slate-200"></span>
+            <span className="text-sm text-slate-500">
+              🟢 {publishedCount} publiée{publishedCount > 1 ? 's' : ''}
+            </span>
+            <span className="text-sm text-slate-500">
+              🟡 {draftCount} brouillon{draftCount > 1 ? 's' : ''}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="🔍 Rechercher..."
+                className="pl-10 pr-4 py-2 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all outline-none w-48 lg:w-64 bg-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Liste des ressources */}
+        {resources.length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-2xl p-16 text-center border-4 border-dashed border-blue-200">
+            <div className="max-w-md mx-auto">
+              <div className="relative inline-block">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 blur-3xl opacity-30 rounded-full"></div>
+                <div className="relative bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-bounce">
+                  <Rocket className="w-16 h-16 text-white" />
+                </div>
+              </div>
+              <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+                🚀 Commencez votre aventure !
+              </h3>
+              <p className="text-slate-500 mb-8 text-lg">
+                Créez votre première ressource et donnez vie à vos idées
+              </p>
+              <Link 
+                href="/ressources/nouveau"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-10 py-4 rounded-2xl font-bold shadow-2xl hover:shadow-3xl transition-all hover:scale-105 text-lg"
+              >
+                <PlusCircle className="w-6 h-6" />
+                ✨ Créer ma première ressource
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {resources.map((resource) => (
+              <div
+                key={resource.id}
+                className="group bg-white rounded-2xl shadow-lg overflow-hidden border-2 border-slate-100 hover:border-blue-400 transition-all duration-300 hover:shadow-2xl hover:-translate-y-2"
+              >
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h2 className="text-xl font-bold text-slate-800 line-clamp-1 flex-1 group-hover:text-blue-600 transition-colors">
+                      {resource.title}
+                    </h2>
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold whitespace-nowrap ml-2 ${
+                      resource.published 
+                        ? 'bg-emerald-100 text-emerald-700' 
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {resource.published ? '📢 Publié' : '✏️ Brouillon'}
+                    </span>
+                  </div>
+                  
+                  <p className="text-slate-600 text-sm line-clamp-2 mb-4">
+                    {resource.content}
+                  </p>
+                  
+                  <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
+                    <Calendar className="w-4 h-4" />
+                    <span>{new Date(resource.createdAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric'
+                    })}</span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Link 
+                      href={`/ressources/${resource.id}`}
+                      className="flex-1 text-center bg-blue-500 text-white px-3 py-2.5 rounded-xl hover:bg-blue-600 transition text-sm font-bold flex items-center justify-center gap-1 shadow-md hover:shadow-lg"
+                    >
+                      <Eye className="w-4 h-4" />
+                      Voir
+                    </Link>
+                    <Link 
+                      href={`/ressources/${resource.id}/edit`}
+                      className="flex-1 text-center bg-purple-500 text-white px-3 py-2.5 rounded-xl hover:bg-purple-600 transition text-sm font-bold flex items-center justify-center gap-1 shadow-md hover:shadow-lg"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Modifier
+                    </Link>
+                    <DeleteButton id={resource.id} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
