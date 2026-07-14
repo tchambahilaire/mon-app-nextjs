@@ -21,14 +21,15 @@ export async function createResource(formData: FormData) {
   const result = resourceSchema.safeParse({ title, content, published })
   
   if (!result.success) {
-    throw new Error(result.error.errors[0].message)
+    const errorMessage = result.error.issues?.[0]?.message || "Données invalides"
+    throw new Error(errorMessage)
   }
 
   await prisma.resource.create({
     data: {
-      title,
-      content,
-      published,
+      title: result.data.title,
+      content: result.data.content,
+      published: result.data.published,
       userId: user.id
     }
   })
@@ -37,7 +38,7 @@ export async function createResource(formData: FormData) {
   redirect('/dashboard')
 }
 
-// READ (list) - Optimisé
+// READ (list)
 export async function getResources() {
   const user = await getSession()
   
@@ -48,7 +49,6 @@ export async function getResources() {
   return await prisma.resource.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
-    // Récupérer uniquement les champs nécessaires
     select: {
       id: true,
       title: true,
@@ -116,12 +116,17 @@ export async function updateResource(id: string, formData: FormData) {
   const result = resourceSchema.safeParse({ title, content, published })
   
   if (!result.success) {
-    throw new Error(result.error.errors[0].message)
+    const errorMessage = result.error.issues?.[0]?.message || "Données invalides"
+    throw new Error(errorMessage)
   }
 
   await prisma.resource.update({
     where: { id },
-    data: { title, content, published }
+    data: {
+      title: result.data.title,
+      content: result.data.content,
+      published: result.data.published
+    }
   })
 
   revalidatePath('/dashboard')
