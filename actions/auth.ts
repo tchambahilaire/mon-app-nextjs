@@ -8,14 +8,14 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Nom trop court"),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Mot de passe trop court"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 })
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Mot de passe trop court"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
 })
 
 export async function register(formData: FormData) {
@@ -46,10 +46,12 @@ export async function register(formData: FormData) {
 
     return { success: true }
   } catch (error) {
-    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      throw error
+    if (error instanceof z.ZodError) {
+      // Récupérer le premier message d'erreur
+      const firstError = error.errors[0]?.message || "Données invalides"
+      return { error: firstError }
     }
-    return { error: error instanceof Error ? error.message : "Erreur lors de l'inscription" }
+    return { error: "Une erreur est survenue lors de l'inscription" }
   }
 }
 
@@ -87,10 +89,11 @@ export async function login(formData: FormData) {
 
     return { success: true }
   } catch (error) {
-    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      throw error
+    if (error instanceof z.ZodError) {
+      const firstError = error.errors[0]?.message || "Données invalides"
+      return { error: firstError }
     }
-    return { error: error instanceof Error ? error.message : "Erreur de connexion" }
+    return { error: "Une erreur est survenue lors de la connexion" }
   }
 }
 
