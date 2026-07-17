@@ -3,6 +3,7 @@
 import { deleteResource } from "@/actions/resources"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import toast from 'react-hot-toast'
 
 interface DeleteButtonProps {
   id: string
@@ -20,9 +21,11 @@ export function DeleteButton({ id }: DeleteButtonProps) {
     setIsLoading(true)
     try {
       await deleteResource(id)
+      toast.success('🗑️ Ressource supprimée avec succès !')
       router.push('/dashboard')
     } catch (error) {
       console.error(error)
+      toast.error('❌ Erreur lors de la suppression')
       setIsLoading(false)
     }
   }

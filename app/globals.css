@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background: 11, 13, 26;
+  --foreground: 208, 214, 240;
+  --card: 16, 21, 43;
+  --border: 31, 42, 74;
+  --text-muted: 106, 122, 170;
+  --text-primary: 0, 240, 255;
+}
+
+:root.light {
+  --background: 245, 245, 250;
+  --foreground: 30, 30, 50;
+  --card: 255, 255, 255;
+  --border: 200, 200, 220;
+  --text-muted: 100, 100, 130;
+  --text-primary: 0, 120, 200;
+}
+
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.bg-theme {
+  background: rgb(var(--background));
+}
+.bg-card {
+  background: rgb(var(--card));
+}
+.border-theme {
+  border-color: rgb(var(--border));
+}
+.text-muted {
+  color: rgb(var(--text-muted));
+}
+.text-primary {
+  color: rgb(var(--text-primary));
+}

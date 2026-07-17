@@ -15,35 +15,25 @@ const resourceSchema = z.object({
 // CREATE
 export async function createResource(formData: FormData) {
   const user = await getSession()
-  if (!user) {
-    throw new Error("Non authentifié")
-  }
+  if (!user) throw new Error("Non authentifié")
 
   const title = formData.get("title") as string
   const content = formData.get("content") as string
   const published = formData.get("published") === "on"
 
-  try {
-    const validated = resourceSchema.parse({ title, content, published })
+  const validated = resourceSchema.parse({ title, content, published })
 
-    await prisma.resource.create({
-      data: {
-        title: validated.title,
-        content: validated.content,
-        published: validated.published,
-        userId: user.id
-      }
-    })
-
-    revalidatePath("/dashboard")
-    redirect("/dashboard")
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const firstError = error.errors[0]?.message || "Données invalides"
-      throw new Error(firstError)
+  await prisma.resource.create({
+    data: {
+      title: validated.title,
+      content: validated.content,
+      published: validated.published,
+      userId: user.id
     }
-    throw error
-  }
+  })
+
+  revalidatePath("/dashboard")
+  redirect("/dashboard")
 }
 
 // READ (liste)
@@ -77,39 +67,27 @@ export async function updateResource(id: string, formData: FormData) {
   const user = await getSession()
   if (!user) throw new Error("Non authentifié")
 
-  const resource = await prisma.resource.findUnique({
-    where: { id }
-  })
-  if (!resource || resource.userId !== user.id) {
-    throw new Error("Accès non autorisé")
-  }
+  const resource = await prisma.resource.findUnique({ where: { id } })
+  if (!resource || resource.userId !== user.id) throw new Error("Accès non autorisé")
 
   const title = formData.get("title") as string
   const content = formData.get("content") as string
   const published = formData.get("published") === "on"
 
-  try {
-    const validated = resourceSchema.parse({ title, content, published })
+  const validated = resourceSchema.parse({ title, content, published })
 
-    await prisma.resource.update({
-      where: { id },
-      data: {
-        title: validated.title,
-        content: validated.content,
-        published: validated.published
-      }
-    })
-
-    revalidatePath("/dashboard")
-    revalidatePath(`/ressources/${id}`)
-    redirect("/dashboard")
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const firstError = error.errors[0]?.message || "Données invalides"
-      throw new Error(firstError)
+  await prisma.resource.update({
+    where: { id },
+    data: {
+      title: validated.title,
+      content: validated.content,
+      published: validated.published
     }
-    throw error
-  }
+  })
+
+  revalidatePath("/dashboard")
+  revalidatePath(`/ressources/${id}`)
+  redirect("/dashboard")
 }
 
 // DELETE
@@ -117,16 +95,10 @@ export async function deleteResource(id: string) {
   const user = await getSession()
   if (!user) throw new Error("Non authentifié")
 
-  const resource = await prisma.resource.findUnique({
-    where: { id }
-  })
-  if (!resource || resource.userId !== user.id) {
-    throw new Error("Accès non autorisé")
-  }
+  const resource = await prisma.resource.findUnique({ where: { id } })
+  if (!resource || resource.userId !== user.id) throw new Error("Accès non autorisé")
 
-  await prisma.resource.delete({
-    where: { id }
-  })
+  await prisma.resource.delete({ where: { id } })
 
   revalidatePath("/dashboard")
   redirect("/dashboard")

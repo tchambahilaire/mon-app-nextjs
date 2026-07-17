@@ -6,6 +6,7 @@ import { z } from "zod"
 import { signToken } from "@/lib/auth/jwt"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { rateLimit } from "@/lib/rate-limit"
 
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -26,8 +27,13 @@ export async function register(formData: FormData) {
   try {
     const validated = registerSchema.parse({ name, email, password })
 
+    const { success, remaining } = await rateLimit(`register_${email}`, 5, 60)
+    if (!success) {
+      return { error: "Trop de tentatives. Veuillez réessayer dans 60 secondes." }
+    }
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: validated.email }
+      where: { email: validated.email },
     })
 
     if (existingUser) {
@@ -40,14 +46,13 @@ export async function register(formData: FormData) {
       data: {
         name: validated.name,
         email: validated.email,
-        password: hashedPassword
-      }
+        password: hashedPassword,
+      },
     })
 
     return { success: true }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Récupérer le premier message d'erreur
       const firstError = error.errors[0]?.message || "Données invalides"
       return { error: firstError }
     }
@@ -62,8 +67,13 @@ export async function login(formData: FormData) {
   try {
     const validated = loginSchema.parse({ email, password })
 
+    const { success, remaining } = await rateLimit(`login_${email}`, 5, 60)
+    if (!success) {
+      return { error: "Trop de tentatives. Veuillez réessayer dans 60 secondes." }
+    }
+
     const user = await prisma.user.findUnique({
-      where: { email: validated.email }
+      where: { email: validated.email },
     })
 
     if (!user) {
@@ -76,7 +86,7 @@ export async function login(formData: FormData) {
       return { error: "Email ou mot de passe incorrect" }
     }
 
-    const token = signToken(user.id, user.email)
+    const token = signToken(user.id)
 
     const cookieStore = await cookies()
     cookieStore.set("token", token, {
@@ -84,7 +94,7 @@ export async function login(formData: FormData) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
-      path: "/"
+      path: "/",
     })
 
     return { success: true }
