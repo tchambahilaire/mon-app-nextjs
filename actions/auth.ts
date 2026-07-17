@@ -7,6 +7,7 @@ import { signToken } from "@/lib/auth/jwt"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { rateLimit } from "@/lib/rate-limit"
+import validator from "email-validator"
 
 const registerSchema = z.object({
   name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
@@ -27,7 +28,12 @@ export async function register(formData: FormData) {
   try {
     const validated = registerSchema.parse({ name, email, password })
 
-    const { success, remaining } = await rateLimit(`register_${email}`, 5, 60)
+    // Validation email supplémentaire
+    if (!validator.validate(validated.email)) {
+      return { error: "Email invalide" }
+    }
+
+    const { success } = await rateLimit(`register_${email}`, 5, 60)
     if (!success) {
       return { error: "Trop de tentatives. Veuillez réessayer dans 60 secondes." }
     }
@@ -67,7 +73,12 @@ export async function login(formData: FormData) {
   try {
     const validated = loginSchema.parse({ email, password })
 
-    const { success, remaining } = await rateLimit(`login_${email}`, 5, 60)
+    // Validation email supplémentaire
+    if (!validator.validate(validated.email)) {
+      return { error: "Email invalide" }
+    }
+
+    const { success } = await rateLimit(`login_${email}`, 5, 60)
     if (!success) {
       return { error: "Trop de tentatives. Veuillez réessayer dans 60 secondes." }
     }
@@ -93,7 +104,7 @@ export async function login(formData: FormData) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 30, // 30 minutes
       path: "/",
     })
 

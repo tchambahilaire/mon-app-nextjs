@@ -2,18 +2,17 @@ import jwt from 'jsonwebtoken'
 
 const SECRET = process.env.JWT_SECRET || 'mon-secret-super-securise'
 
-export function signToken(userId: string, email: string) {
-  console.log("🔐 Signing token for:", email)
-  return jwt.sign({ userId, email }, SECRET, { expiresIn: '7d' })
+// 30 minutes en production, 7 jours en développement
+const EXPIRES_IN = process.env.NODE_ENV === 'production' ? '30m' : '7d'
+
+export function signToken(userId: string) {
+  return jwt.sign({ userId }, SECRET, { expiresIn: EXPIRES_IN })
 }
 
 export function verifyToken(token: string) {
   try {
-    const decoded = jwt.verify(token, SECRET) as { userId: string; email: string }
-    console.log("✅ Token verified for:", decoded.email)
-    return decoded
-  } catch (error) {
-    console.log("❌ Token verification failed:", error)
+    return jwt.verify(token, SECRET) as { userId: string }
+  } catch {
     return null
   }
 }

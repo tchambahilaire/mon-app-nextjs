@@ -8,8 +8,9 @@ import { logout } from "@/actions/auth"
 import { DeleteButton } from "@/components/DeleteButton"
 import Footer from "@/components/Footer"
 import Pagination from "@/components/Pagination"
+import ThemeToggle from "@/components/ThemeToggle"
 import { motion, AnimatePresence } from "framer-motion"
-import toast from 'react-hot-toast'
+import toast from "react-hot-toast"
 
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
@@ -56,7 +57,6 @@ export default function DashboardPage() {
     loadData()
   }, [router])
 
-  // Filtrage des ressources
   useEffect(() => {
     let filtered = resources
 
@@ -77,12 +77,45 @@ export default function DashboardPage() {
     setCurrentPage(1)
   }, [search, filter, resources])
 
-  // Pagination
   const totalPages = Math.ceil(filteredResources.length / itemsPerPage)
   const paginatedResources = filteredResources.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
+
+  // Export CSV
+  const exportCSV = () => {
+    if (resources.length === 0) {
+      toast.error("❌ Aucune ressource à exporter")
+      return
+    }
+
+    const headers = ['Titre', 'Contenu', 'Publié', 'Date de création', 'Date de modification']
+    const rows = resources.map(r => [
+      `"${r.title.replace(/"/g, '""')}"`,
+      `"${r.content.replace(/"/g, '""')}"`,
+      r.published ? 'Oui' : 'Non',
+      new Date(r.createdAt).toLocaleDateString('fr-FR'),
+      new Date(r.updatedAt).toLocaleDateString('fr-FR')
+    ])
+    const csv = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }) // UTF-8 avec BOM pour Excel
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ressources_${new Date().toISOString().slice(0,10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success("📊 Export CSV réussi !")
+  }
+
+  // Changer le thème
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('light')
+    toast.success("🎨 Thème changé !")
+  }
 
   if (loading) {
     return (
@@ -104,7 +137,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#0b0d1a] text-[#d0d6f0] font-['Courier_New',monospace] flex flex-col">
-      {/* Styles intégrés */}
       <style>{`
         .navbar {
           background: #0f1222;
@@ -126,7 +158,7 @@ export default function DashboardPage() {
           cursor: default;
         }
         .logo i { margin-right: 10px; color: #b47aff; }
-        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .nav-links a {
           background: transparent;
           border: none;
@@ -163,6 +195,10 @@ export default function DashboardPage() {
           gap: 10px;
         }
         .btn-neon:hover { background: #00f0ff; color: #0b0d1a; box-shadow: 0 0 50px #00f0ff66; transform: scale(1.03); }
+        .btn-neon-small {
+          padding: 8px 16px;
+          font-size: 12px;
+        }
         .stat-card {
           background: #10152b;
           border: 1px solid #1f2a50;
@@ -201,22 +237,26 @@ export default function DashboardPage() {
           .nav-links { justify-content: center; }
           .page { padding: 30px 18px; }
           .stat-value { font-size: 24px; }
-          .grid-cols-2 { grid-template-columns: 1fr 1fr; }
         }
       `}</style>
 
-      {/* Navigation */}
       <nav className="navbar">
         <div className="logo"><i className="fas fa-terminal"></i>MonApp</div>
         <div className="nav-links">
           <Link href="/dashboard" className="active"><i className="fas fa-home"></i> Accueil</Link>
           <Link href="/ressources"><i className="fas fa-box"></i> Ressources</Link>
           <Link href="/developpe-par"><i className="fas fa-code"></i> 👨‍💻</Link>
+          <ThemeToggle />
+          <button
+            onClick={exportCSV}
+            className="text-[#6a7aaa] hover:text-[#00f0ff] px-3 py-2 rounded-lg border border-transparent hover:border-[#00f0ff44] transition font-['Courier_New',monospace] text-sm flex items-center gap-2"
+          >
+            <i className="fas fa-file-export"></i> Export
+          </button>
           <form action={logout}><button type="submit"><i className="fas fa-sign-out-alt"></i> Déconnexion</button></form>
         </div>
       </nav>
 
-      {/* Contenu */}
       <div className="page">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -233,7 +273,6 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Statistiques */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="stat-card">
             <div className="flex justify-between items-center mb-2">
@@ -269,7 +308,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Barre de recherche et filtres */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6a7aaa]"></i>
@@ -281,7 +319,7 @@ export default function DashboardPage() {
               className="w-full bg-[#10152b] border border-[#1f2a50] rounded-xl pl-10 pr-4 py-3 text-[#d0d6f0] outline-none focus:border-[#00f0ff] transition"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter("all")}
               className={`px-4 py-2 rounded-xl border transition ${
@@ -309,14 +347,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Résultats */}
         <p className="text-sm text-[#6a7aaa] mb-4">
           {filteredResources.length} ressource{filteredResources.length > 1 ? "s" : ""}
           {search && ` pour "${search}"`}
           {filter !== "all" && ` (${filter === "published" ? "publiées" : "brouillons"})`}
         </p>
 
-        {/* Liste des ressources */}
         <AnimatePresence>
           {filteredResources.length === 0 ? (
             <motion.div

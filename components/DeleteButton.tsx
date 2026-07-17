@@ -34,6 +34,9 @@ export function DeleteButton({ id }: DeleteButtonProps) {
     <button
       onClick={handleDelete}
       disabled={isLoading}
+      aria-label="Supprimer la ressource"
+      role="button"
+      tabIndex={0}
       className="flex-1 text-center bg-[#1a1f38] text-[#ff6b8a] px-3 py-2 rounded-lg hover:bg-[#1f2a50] transition text-sm font-mono flex items-center justify-center gap-1 disabled:opacity-50"
     >
       🗑️ {isLoading ? '...' : 'Supprimer'}
