@@ -2,9 +2,15 @@
 
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { z } from "zod"
 import { signToken } from "@/lib/auth/jwt"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6)
+})
 
 export async function loginAction(email: string, password: string) {
   console.log("🔑 loginAction called with:", email)
@@ -23,7 +29,7 @@ export async function loginAction(email: string, password: string) {
     return { error: "Email ou mot de passe incorrect" }
   }
 
-  const token = signToken(user.id, user.email)
+  const token = signToken(user.id)
 
   const cookieStore = await cookies()
   cookieStore.set("token", token, {
@@ -35,7 +41,5 @@ export async function loginAction(email: string, password: string) {
   })
 
   console.log("✅ Login successful, redirecting...")
-  
-  // Redirection directe
   redirect("/dashboard")
 }
