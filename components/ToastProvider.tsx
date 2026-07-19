@@ -10,27 +10,15 @@ export default function ToastProvider() {
         style: {
           background: '#1a1f38',
           color: '#d0d6f0',
-          border: '1px solid #1f2a4a',
+          border: '1px solid rgba(0, 240, 255, 0.2)',
           borderRadius: '12px',
-          fontFamily: 'Courier New, monospace',
+          fontFamily: 'Inter, sans-serif',
         },
         success: {
-          style: {
-            border: '1px solid #00f0ff',
-          },
-          iconTheme: {
-            primary: '#00f0ff',
-            secondary: '#0b0d1a',
-          },
+          iconTheme: { primary: '#00f0ff', secondary: '#080a1a' },
         },
         error: {
-          style: {
-            border: '1px solid #ff6b8a',
-          },
-          iconTheme: {
-            primary: '#ff6b8a',
-            secondary: '#0b0d1a',
-          },
+          iconTheme: { primary: '#ff6b8a', secondary: '#080a1a' },
         },
       }}
     />
