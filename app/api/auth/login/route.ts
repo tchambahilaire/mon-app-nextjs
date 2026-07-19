@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const token = signToken(user.id, user.email)
+    const token = signToken(user.id)
     
     const response = NextResponse.json({
       user: { id: user.id, email: user.email, name: user.name }
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7 // 7 jours
+      maxAge: 60 * 60 * 24 * 7
     })
     
     return response
