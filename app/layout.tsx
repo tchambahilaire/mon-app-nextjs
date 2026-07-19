@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Inter, Orbitron } from "next/font/google"
-import "./globals.css"
+import "./styles.css"
 import ToastProvider from "@/components/ToastProvider"
 import SkipLink from "@/components/SkipLink"
 
@@ -30,7 +30,7 @@ export default function RootLayout({
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
       </head>
-      <body className="bg-[#0b0d1a] text-[#d0d6f0] min-h-screen font-sans">
+      <body className="bg-[#0a0c1a] text-[#eef4ff] min-h-screen font-sans">
         <SkipLink />
         <ToastProvider />
         <main id="main-content">{children}</main>
